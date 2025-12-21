@@ -1,0 +1,16 @@
+# Secrets & API Keys
+.env
+.streamlit/secrets.toml
+
+# Python Virtual Environments
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Large Vector Indices (Optional, if you don't want to push them)
+faiss_index/
+
+# OS files
+.DS_Store
