@@ -1,47 +1,69 @@
-'use client';
-import { useState } from "react";                  
+"use client";
+
+import { useState } from "react";
 import UploadformInput from "./upload-form-input";
 import { z } from "zod";
+import { useUploadThing } from "@/utils/Uploadthing";
+import { toast } from "sonner";
+import { generatePdfSummary } from "@/actions/upload-actions";
+
 
 const schema = z.object({
-    file: z.instanceof(File, {message: 'Invalid file'})
-    .refine(
-        (file) => file.size <= 20 * 1024 * 1024,
-        'File size must be less than 20MB'
-    )
-    .refine(
-        (file) => file.type.startsWith('application/pdf'),
-        'File must be a PDf'
-    ),
+  file: z
+    .instanceof(File, { message: "Invalid file" })
+    .refine((file) => file.size <= 20 * 1024 * 1024, "File size must be less than 20MB")
+    .refine((file) => file.type === "application/pdf", "File must be a PDF"),
 });
 
 export default function Uploadform() {
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        console.log('submitted');
-        const formData = new FormData(e.currentTarget);
-        const file = formData.get('file') as File;
 
-        //validating the feilds
-        const validatedFeilds = schema.safeParse({file})
+  const { startUpload } = useUploadThing("pdfUploader", {
+    onClientUploadComplete: () => {
+      toast.success("Uploaded successfully!");
+    },
 
-        console.log(validatedFeilds);
+    onUploadError: (err) => {
+      toast.error(err.message);
+    },
 
-        if (!validatedFeilds.success) {
-            console.log(
-                validatedFeilds.error.flatten().fieldErrors.file?.[0] ?? 'Invalid file'
-            );
-            return;
-            
-        }
+    onUploadBegin: ({ fileName }) => {
+      toast.loading(`Uploading ${fileName}...`);
+    },
+  });
 
-        
-    };
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-    
-    return(
-        <div className="flex flex-col gap-8 w-full max-w-2xl mx-auto">
-          <UploadformInput onSubmit={handleSubmit} />
-        </div>
-    );
+    const formData = new FormData(e.currentTarget);
+    const file = formData.get("file") as File;
+
+    const validatedFields = schema.safeParse({ file });
+
+    if (!validatedFields.success) {
+      toast.error(
+        validatedFields.error.flatten().fieldErrors.file?.[0] ??
+          "Invalid file"
+      );
+      return;
+    }
+
+    const resp = await startUpload([file]);
+
+    if (!resp) {
+      toast.error("Please use a different file");
+      return;
+    }
+
+    toast.success("Processing PDF. Please wait!");
+  
+
+  const summary = await generatePdfSummary(resp);
+
+};
+
+  return (
+    <div className="flex flex-col gap-8 w-full max-w-2xl mx-auto">
+      <UploadformInput onSubmit={handleSubmit} />
+    </div>
+  );
 }

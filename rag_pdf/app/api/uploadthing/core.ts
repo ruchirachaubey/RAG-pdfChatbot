@@ -5,10 +5,10 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 
 const f = createUploadthing();
 
-export const outFileRouter = {
+export const ourFileRouter = {
     pdfUploader: f({ pdf: { maxFileSize: '32MB'} })
     .middleware(async ({ req }) => {
-        //get user info
+        //getuser info
         const user = await currentUser();
 
         if (!user) throw new UploadThingError('Unauthorized');
@@ -20,9 +20,9 @@ export const outFileRouter = {
 
         console.log('file url', file.url);
 
-        return { userId: metadata.userId, file: file.url};
+        return { userId: metadata.userId, file};
     }),
 
     } satisfies FileRouter;
 
-    export type OutFileRouter = typeof outFileRouter;
+    export type OurFileRouter = typeof ourFileRouter;
