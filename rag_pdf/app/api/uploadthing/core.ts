@@ -20,7 +20,12 @@ export const ourFileRouter = {
 
         console.log('file url', file.url);
 
-        return { userId: metadata.userId, file};
+        return {  userId: metadata.userId, file
+        // fileUrl: file.url,
+        // fileKey: file.key,
+        // fileName: file.name,
+        // fileSize: file.size,;
+        }
     }),
 
     } satisfies FileRouter;

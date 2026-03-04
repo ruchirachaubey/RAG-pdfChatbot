@@ -1,4 +1,5 @@
 'use server'
+import { fetchAndExtractPdfText } from "@/lib/langchain";
 
 export async function generatePdfSummary(
     uploadResponse: [
@@ -38,7 +39,8 @@ export async function generatePdfSummary(
     }
 
     try {
-    const response = await fetchAndExtractPdfText(pdfUrl);
+    const pdfText = await fetchAndExtractPdfText(pdfUrl);
+    console.log({pdfText})
     }catch (error) {
         return {
             success: false,

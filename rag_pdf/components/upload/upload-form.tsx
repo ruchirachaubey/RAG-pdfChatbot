@@ -1,33 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import UploadformInput from "./upload-form-input";
 import { z } from "zod";
+import UploadformInput from "./upload-form-input";
 import { useUploadThing } from "@/utils/Uploadthing";
 import { toast } from "sonner";
 import { generatePdfSummary } from "@/actions/upload-actions";
 
-
 const schema = z.object({
   file: z
     .instanceof(File, { message: "Invalid file" })
-    .refine((file) => file.size <= 20 * 1024 * 1024, "File size must be less than 20MB")
-    .refine((file) => file.type === "application/pdf", "File must be a PDF"),
+    .refine(
+      (file) => file.size <= 20 * 1024 * 1024,
+      "File size must be less than 20MB"
+    )
+    .refine(
+      (file) => file.type === "application/pdf",
+      "File must be a PDF"
+    ),
 });
 
 export default function Uploadform() {
-
   const { startUpload } = useUploadThing("pdfUploader", {
     onClientUploadComplete: () => {
-      toast.success("Uploaded successfully!");
+      console.log("Uploaded successfully!");
     },
 
     onUploadError: (err) => {
-      toast.error(err.message);
+      console.error("Upload error:", err);
+
+      toast.error("Upload failed", {
+        description: err.message ?? "Something went wrong while uploading",
+      });
     },
 
-    onUploadBegin: ({ fileName }) => {
-      toast.loading(`Uploading ${fileName}...`);
+    onUploadBegin: ({ file }) => {
+      console.log(`Uploading ${file}...`);
     },
   });
 
@@ -40,26 +47,33 @@ export default function Uploadform() {
     const validatedFields = schema.safeParse({ file });
 
     if (!validatedFields.success) {
-      toast.error(
-        validatedFields.error.flatten().fieldErrors.file?.[0] ??
-          "Invalid file"
-      );
+      toast.error("Invalid file", {
+        description:
+          validatedFields.error.flatten().fieldErrors.file?.[0] ??
+          "Please upload a valid PDF",
+      });
       return;
     }
+
+    toast.loading("Uploading PDF…");
 
     const resp = await startUpload([file]);
 
     if (!resp) {
-      toast.error("Please use a different file");
+      toast.error("Upload failed", {
+        description: "Please try a different file",
+      });
       return;
     }
 
-    toast.success("Processing PDF. Please wait!");
-  
+    toast.success("Processing PDF", {
+      description: "Hang tight! Our AI is reading your document 📄",
+    });
 
-  const summary = await generatePdfSummary(resp);
-
-};
+    
+    const summary = await generatePdfSummary(resp);
+    console.log({ summary });
+  };
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-2xl mx-auto">
